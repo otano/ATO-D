@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Agents instructions
+AGENTS.md
+
 # macOS
 .DS_Store
 
