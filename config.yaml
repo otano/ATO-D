@@ -1,8 +1,12 @@
 largeur_colonne: 1800
-hauteur_cartouche: 950
-largeur_image: 450
 hauteur_image: 600
+largeur_image: 450
 espace_horizontal: 250
 espace_vertical: 700
 marge_gauche: 400
 marge_haut: 300
+
+marge_cadre: 100
+offset_carte: 1800
+largeur_carte: 1800
+hauteur_texte_carte: 80
