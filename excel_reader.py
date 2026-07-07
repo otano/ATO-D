@@ -31,9 +31,9 @@ COLUMN_MAP = {
     "Date": "date",
     "Dimensions": "dimensions",
     "Prêteur": "lender",
-    "N° inventaire": "inventory_number",
+    "N° inventaire prêteur": "inventory_number",
     "Section": "section",
-    "Conditions de présentation": "presentation_conditions",
+    "conditions de présentation": "presentation_conditions",
 }
 
 
@@ -44,7 +44,9 @@ def read_excel(filepath: str | Path) -> list[Section]:
     rename = {k: v for k, v in COLUMN_MAP.items() if k in df.columns}
     df = df.rename(columns=rename)
 
-    works = [Work(**{f.name: row[f.name] for f in Work.__dataclass_fields__ if f.name in row.index}) for _, row in df.iterrows()]
+    field_names = list(Work.__dataclass_fields__)
+    existing = [f for f in field_names if f in df.columns]
+    works = [Work(**{f: row[f] for f in existing}) for _, row in df.iterrows()]
 
     sections: dict[str, Section] = {}
     for w in works:
