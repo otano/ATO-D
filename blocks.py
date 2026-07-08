@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import ezdxf
@@ -35,6 +36,7 @@ def create_work_block(
     cadre_w: float,
     cadre_h: float,
     has_dimensions: bool,
+    links_dir: Path | None = None,
 ):
     half_pw, half_ph = plan_w / 2, plan_h / 2
     half_cw, half_ch = cadre_w / 2, cadre_h / 2
@@ -63,7 +65,17 @@ def create_work_block(
                 scale = min(plan_w / px, plan_h / py)
                 disp_w = px * scale
                 disp_h = py * scale
-                img_def = doc.add_imagedef(str(Path(img_path).resolve()), px, py)
+
+                if links_dir is not None:
+                    links_dir.mkdir(parents=True, exist_ok=True)
+                    dst = links_dir / Path(img_path).name
+                    if not dst.exists():
+                        shutil.copy2(img_path, dst)
+                    img_def_path = str(dst.resolve())
+                else:
+                    img_def_path = str(Path(img_path).resolve())
+
+                img_def = doc.add_imagedef(img_def_path, px, py)
                 img_def.dxf.layer = "A8-ART-works photo"
                 img = blk.add_image(img_def, insert=(-plan_w / 2, -plan_h / 2), size_in_units=(disp_w, disp_h))
                 img.dxf.layer = "A8-ART-works photo"

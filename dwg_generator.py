@@ -149,6 +149,8 @@ def generate_dxf(works: list[PositionedWork], config: LayoutConfig, output_path:
     if target_path.exists():
         _copy_style_annotations(doc, target_path)
 
+    links_dir = output_path.parent / "links"
+
     for pw in works:
         bname = _make_block_name(pw)
         create_work_block(
@@ -156,6 +158,7 @@ def generate_dxf(works: list[PositionedWork], config: LayoutConfig, output_path:
             plan_w=pw.plan_w, plan_h=pw.plan_h,
             cadre_w=pw.cadre_w, cadre_h=pw.cadre_h,
             has_dimensions=pw.has_dimensions,
+            links_dir=links_dir,
         )
 
         cx, cy = pw.insert_x, pw.insert_y
