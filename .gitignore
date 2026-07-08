@@ -17,4 +17,6 @@ AGENTS.md
 
 # Generated output
 *.dxf
+*.dwl
+*.dwl2
 images/
