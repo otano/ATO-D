@@ -151,7 +151,12 @@ def generate_dxf(works: list[PositionedWork], config: LayoutConfig, output_path:
 
     for pw in works:
         bname = _make_block_name(pw)
-        create_work_block(doc, bname, pw.work, config)
+        create_work_block(
+            doc, bname, pw.work,
+            plan_w=pw.plan_w, plan_h=pw.plan_h,
+            cadre_w=pw.cadre_w, cadre_h=pw.cadre_h,
+            has_dimensions=pw.has_dimensions,
+        )
 
         cx, cy = pw.insert_x, pw.insert_y
         msp.add_blockref(bname, insert=(cx, cy), dxfattribs={"layer": "A8-ART-works plan"})

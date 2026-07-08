@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from excel_reader import Section, Work
+from excel_reader import Section, Work, parse_dimensions
 
 
 @dataclass
@@ -30,6 +30,42 @@ class PositionedWork:
     plan_h: float
     cadre_w: float
     cadre_h: float
+    has_dimensions: bool = True
+
+
+def _compute_display_size(work: Work, col_w: float) -> tuple[float, float, float, float, bool]:
+    marge = 100
+    dims = parse_dimensions(work.dimensions)
+    if dims is None:
+        return 450, 600, 450 + 2*marge, 600 + 2*marge, False
+
+    work_aspect = dims.work_h / dims.work_w if dims.work_w else 1.0
+    max_w = col_w * 0.8
+    max_h = 2000.0
+
+    if dims.cadre_w and dims.cadre_h:
+        cad_aspect = dims.cadre_h / dims.cadre_w
+        if cad_aspect > 1.0:
+            cadre_h = min(max_w * cad_aspect, max_h)
+            cadre_w = cadre_h / cad_aspect
+        else:
+            cadre_w = max_w
+            cadre_h = cadre_w * cad_aspect
+    else:
+        cadre_w = max_w
+        cadre_h = cadre_w * max(work_aspect, 0.5)
+        if cadre_h > max_h:
+            cadre_h = max_h
+
+    cadre_w = min(cadre_w, max_w)
+
+    plan_w = cadre_w - 2 * marge
+    plan_h = plan_w * work_aspect
+    if plan_h > cadre_h - 2 * marge:
+        plan_h = cadre_h - 2 * marge
+        plan_w = plan_h / work_aspect
+
+    return plan_w, plan_h, cadre_w, cadre_h, True
 
 
 def compute_layout(sections: list[Section], config: LayoutConfig) -> list[PositionedWork]:
@@ -41,10 +77,7 @@ def compute_layout(sections: list[Section], config: LayoutConfig) -> list[Positi
         y = start_y - row_idx * row_height
         for col_idx, work in enumerate(section.works):
             x = config.marge_gauche + col_idx * (config.largeur_colonne + config.espace_horizontal)
-            plan_w = config.largeur_image
-            plan_h = config.hauteur_image
-            cadre_w = plan_w + 2 * config.marge_cadre
-            cadre_h = plan_h + 2 * config.marge_cadre
+            plan_w, plan_h, cadre_w, cadre_h, has_dim = _compute_display_size(work, config.largeur_colonne)
             block_name = f"ART-{work.dexid}"
             result.append(PositionedWork(
                 work=work, col=col_idx, row=row_idx,
@@ -52,5 +85,6 @@ def compute_layout(sections: list[Section], config: LayoutConfig) -> list[Positi
                 insert_x=x, insert_y=y,
                 plan_w=plan_w, plan_h=plan_h,
                 cadre_w=cadre_w, cadre_h=cadre_h,
+                has_dimensions=has_dim,
             ))
     return result

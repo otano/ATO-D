@@ -6,7 +6,6 @@ import ezdxf
 from ezdxf.entities import Wipeout
 
 from excel_reader import Work
-from layout import LayoutConfig
 
 
 def _make_detail_text(work: Work) -> str:
@@ -27,43 +26,67 @@ def _make_detail_text(work: Work) -> str:
     return "".join(parts)
 
 
-def create_work_block(doc: ezdxf.drawing.Drawing, name: str, work: Work, cfg: LayoutConfig):
-    plan_w, plan_h = cfg.largeur_image, cfg.hauteur_image
-    marge = cfg.marge_cadre
-    cadre_w = plan_w + 2 * marge
-    cadre_h = plan_h + 2 * marge
+def create_work_block(
+    doc: ezdxf.drawing.Drawing,
+    name: str,
+    work: Work,
+    plan_w: float,
+    plan_h: float,
+    cadre_w: float,
+    cadre_h: float,
+    has_dimensions: bool,
+):
     half_pw, half_ph = plan_w / 2, plan_h / 2
     half_cw, half_ch = cadre_w / 2, cadre_h / 2
 
     blk = doc.blocks.new(name)
 
-    blk.add_wipeout([
-        (-half_cw, -half_ch),
-        (half_cw, -half_ch),
-        (half_cw, half_ch),
-        (-half_cw, half_ch),
-        (-half_cw, -half_ch),
-    ])
-    for e in blk:
-        if isinstance(e, Wipeout):
-            e.dxf.layer = "A8-ART-cadre"
-            break
+    if has_dimensions:
+        blk.add_wipeout([
+            (-half_cw, -half_ch),
+            (half_cw, -half_ch),
+            (half_cw, half_ch),
+            (-half_cw, half_ch),
+            (-half_cw, -half_ch),
+        ])
+        for e in blk:
+            if isinstance(e, Wipeout):
+                e.dxf.layer = "A8-ART-cadre"
+                break
 
-    img_path = work.image_path
-    if img_path and Path(img_path).exists():
-        try:
-            from PIL import Image as PILImage
-            pil = PILImage.open(img_path)
-            px, py = pil.size
-            scale = min(plan_w / px, plan_h / py)
-            disp_w = px * scale
-            disp_h = py * scale
-            img_def = doc.add_imagedef(str(Path(img_path).resolve()), px, py)
-            img_def.dxf.layer = "A8-ART-works photo"
-            img = blk.add_image(img_def, insert=(-half_pw, -half_ph), size_in_units=(disp_w, disp_h))
-            img.dxf.layer = "A8-ART-works photo"
-        except Exception:
-            pass
+        img_path = work.image_path
+        if img_path and Path(img_path).exists():
+            try:
+                from PIL import Image as PILImage
+                pil = PILImage.open(img_path)
+                px, py = pil.size
+                scale = min(plan_w / px, plan_h / py)
+                disp_w = px * scale
+                disp_h = py * scale
+                img_def = doc.add_imagedef(str(Path(img_path).resolve()), px, py)
+                img_def.dxf.layer = "A8-ART-works photo"
+                img = blk.add_image(img_def, insert=(-plan_w / 2, -plan_h / 2), size_in_units=(disp_w, disp_h))
+                img.dxf.layer = "A8-ART-works photo"
+            except Exception:
+                pass
+
+        blk.add_lwpolyline(
+            [(-half_pw, -half_ph), (half_pw, -half_ph), (half_pw, half_ph), (-half_pw, half_ph), (-half_pw, -half_ph)],
+            dxfattribs={"layer": "A8-ART-works plan", "color": 241},
+        )
+
+        blk.add_lwpolyline(
+            [(-half_cw, -half_ch), (half_cw, -half_ch), (half_cw, half_ch), (-half_cw, half_ch), (-half_cw, -half_ch)],
+            dxfattribs={"layer": "A8-ART-cadre", "color": 8},
+        )
+
+    else:
+        hatch = blk.add_hatch(color=8, dxfattribs={"layer": "A2-CIMAISE H"})
+        hatch.set_pattern_fill("ANSI31", scale=20)
+        hatch.paths.add_polyline_path(
+            [(-half_cw, -half_ch), (half_cw, -half_ch), (half_cw, half_ch), (-half_cw, half_ch)],
+            is_closed=True,
+        )
 
     no_pos_y = half_ch + 75
     blk.add_mtext(
@@ -77,15 +100,3 @@ def create_work_block(doc: ezdxf.drawing.Drawing, name: str, work: Work, cfg: La
             "attachment_point": 4,
         },
     )
-
-    blk.add_lwpolyline(
-        [(-half_pw, -half_ph), (half_pw, -half_ph), (half_pw, half_ph), (-half_pw, half_ph), (-half_pw, -half_ph)],
-        dxfattribs={"layer": "A8-ART-works plan", "color": 241},
-    )
-
-    blk.add_lwpolyline(
-        [(-half_cw, -half_ch), (half_cw, -half_ch), (half_cw, half_ch), (-half_cw, half_ch), (-half_cw, -half_ch)],
-        dxfattribs={"layer": "A8-ART-cadre", "color": 8},
-    )
-
-    return blk, plan_w, plan_h, cadre_w, cadre_h
