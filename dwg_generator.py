@@ -6,18 +6,7 @@ import ezdxf
 
 from blocks import create_work_block, _make_detail_text
 from layout import LayoutConfig, PositionedWork
-from styles import LAYERS
-
-
-def _setup_styles(doc: ezdxf.drawing.Drawing):
-    existing = {s.dxf.name for s in doc.styles}
-    specs = {
-        "JP_50": ("arial.ttf", 90),
-        "AtoY_40": ("arial.ttf", 80),
-    }
-    for name, (font, height) in specs.items():
-        if name not in existing:
-            doc.styles.new(name, dxfattribs={"font": font, "height": height})
+from styles import LAYERS, TEXT_STYLES
 
 
 def _make_block_name(pw: PositionedWork) -> str:
@@ -30,10 +19,21 @@ def generate_dxf(works: list[PositionedWork], config: LayoutConfig, output_path:
     doc = ezdxf.new("R2010")
     msp = doc.modelspace()
 
-    for layer_def in LAYERS.values():
-        doc.layers.add(name=layer_def["name"], color=layer_def["color"])
+    existing_layers = {l.dxf.name for l in doc.layers}
+    for layer_def in LAYERS:
+        if layer_def["name"] in existing_layers:
+            continue
+        kwargs = {k: v for k, v in layer_def.items() if v is not None}
+        if "color" in kwargs:
+            kwargs["color"] = abs(kwargs["color"])
+        doc.layers.add(name=kwargs.pop("name"), **kwargs)
 
-    _setup_styles(doc)
+    existing_styles = {s.dxf.name for s in doc.styles}
+    for st in TEXT_STYLES:
+        if st["name"] not in existing_styles:
+            doc.styles.new(name=st["name"], dxfattribs={
+                "font": st["font"], "height": st["height"], "width": st["width"],
+            })
 
     for pw in works:
         bname = _make_block_name(pw)
