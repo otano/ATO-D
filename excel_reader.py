@@ -1,8 +1,11 @@
+import io
 from dataclasses import dataclass, field
 from pathlib import Path
 import re
 
+import openpyxl
 import pandas as pd
+from PIL import Image as PILImage
 
 
 @dataclass
@@ -83,7 +86,32 @@ COLUMN_MAP = {
 }
 
 
-def read_excel(filepath: str | Path) -> list[Section]:
+def _extract_images(filepath: str | Path, works: list[Work], links_dir: Path):
+    wb = openpyxl.load_workbook(filepath)
+    ws = wb.active
+    if not hasattr(ws, "_images"):
+        return
+
+    links_dir.mkdir(parents=True, exist_ok=True)
+
+    for img in ws._images:
+        df_idx = img.anchor._from.row - 1
+        if df_idx < 0 or df_idx >= len(works):
+            continue
+        if works[df_idx].image_path:
+            continue
+
+        try:
+            pil = PILImage.open(io.BytesIO(img._data()))
+            ext = (pil.format or "png").lower()
+            dst = links_dir / f"{works[df_idx].dexid}.{ext}"
+            pil.save(dst)
+            works[df_idx].image_path = str(dst.resolve())
+        except Exception:
+            pass
+
+
+def read_excel(filepath: str | Path, links_dir: Path | None = None) -> list[Section]:
     df = pd.read_excel(filepath, dtype=str)
     df = df.where(pd.notna(df), "")
 
@@ -93,6 +121,9 @@ def read_excel(filepath: str | Path) -> list[Section]:
     field_names = list(Work.__dataclass_fields__)
     existing = [f for f in field_names if f in df.columns]
     works = [Work(**{f: row[f] for f in existing}) for _, row in df.iterrows()]
+
+    if links_dir is not None:
+        _extract_images(filepath, works, links_dir)
 
     sections: dict[str, Section] = {}
     for w in works:

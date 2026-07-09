@@ -28,7 +28,8 @@ def main() -> None:
         raw = yaml.safe_load(f)
     cfg = LayoutConfig(**raw)
 
-    sections = read_excel(args.excel)
+    links_dir = args.output.parent / "links"
+    sections = read_excel(args.excel, links_dir=links_dir)
     if not sections:
         print("No data found in Excel file", file=sys.stderr)
         sys.exit(1)
