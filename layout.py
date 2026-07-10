@@ -55,37 +55,20 @@ class PositionedWork:
     section_y: float = 0.0
 
 
-def _compute_display_size(work: Work, col_w: float) -> tuple[float, float, float, float, bool]:
-    marge = 100
+def _compute_display_size(work: Work, marge_cadre: float) -> tuple[float, float, float, float, bool]:
     dims = parse_dimensions(work.dimensions)
     if dims is None:
-        return 450, 600, 450 + 2*marge, 600 + 2*marge, False
+        return 450, 600, 450 + 2 * marge_cadre, 600 + 2 * marge_cadre, False
 
-    work_aspect = dims.work_h / dims.work_w if dims.work_w else 1.0
-    max_w = col_w * 0.8
-    max_h = 2000.0
+    plan_w = dims.work_w * 10.0
+    plan_h = dims.work_h * 10.0
 
     if dims.cadre_w and dims.cadre_h:
-        cad_aspect = dims.cadre_h / dims.cadre_w
-        if cad_aspect > 1.0:
-            cadre_h = min(max_w * cad_aspect, max_h)
-            cadre_w = cadre_h / cad_aspect
-        else:
-            cadre_w = max_w
-            cadre_h = cadre_w * cad_aspect
+        cadre_w = dims.cadre_w * 10.0
+        cadre_h = dims.cadre_h * 10.0
     else:
-        cadre_w = max_w
-        cadre_h = cadre_w * max(work_aspect, 0.5)
-        if cadre_h > max_h:
-            cadre_h = max_h
-
-    cadre_w = min(cadre_w, max_w)
-
-    plan_w = cadre_w - 2 * marge
-    plan_h = plan_w * work_aspect
-    if plan_h > cadre_h - 2 * marge:
-        plan_h = cadre_h - 2 * marge
-        plan_w = plan_h / work_aspect
+        cadre_w = plan_w + 2 * marge_cadre
+        cadre_h = plan_h + 2 * marge_cadre
 
     return plan_w, plan_h, cadre_w, cadre_h, True
 
@@ -99,7 +82,7 @@ def compute_layout(sections: list[Section], config: LayoutConfig) -> list[Positi
         section_top = start_y - row_idx * row_height
         for col_idx, work in enumerate(section.works):
             x = config.marge_gauche + col_idx * (config.largeur_colonne + config.espace_horizontal)
-            plan_w, plan_h, cadre_w, cadre_h, has_dim = _compute_display_size(work, config.largeur_colonne)
+            plan_w, plan_h, cadre_w, cadre_h, has_dim = _compute_display_size(work, config.marge_cadre)
             block_name = f"ART-{work.dexid}"
 
             # Works with depth (P) go on ligne 3 (idx 2), others on ligne 1 (idx 0)
