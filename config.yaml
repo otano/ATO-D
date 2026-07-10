@@ -7,6 +7,5 @@ marge_gauche: 400
 marge_haut: 300
 
 marge_cadre: 100
-offset_carte: 1700
 largeur_carte: 1800
 hauteur_texte_carte: 80

@@ -88,15 +88,4 @@ def create_work_block(
             is_closed=True,
         )
 
-    no_pos_y = half_ch + 75
-    blk.add_mtext(
-        work.dexid,
-        dxfattribs={
-            "layer": "A8-ART no",
-            "style": "JP_50",
-            "char_height": 90,
-            "color": 152,
-            "insert": (-half_cw, no_pos_y),
-            "attachment_point": 4,
-        },
-    )
+

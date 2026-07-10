@@ -1,6 +1,26 @@
+import re
 from dataclasses import dataclass, field
 
 from excel_reader import Section, Work, parse_dimensions
+
+
+# Ligne offsets from section top
+LIGNE_LAYERS = ["A8-ART no", "A8-ART no", "A6-VU 2", "A6-VU 2", "A2-CHIMASE", "Defpoints", "Defpoints"]
+
+# Cumulative offsets from section top: start at 0, then add user's gaps
+LIGNE_GAPS = [400, 1209, 800, 800, 100, 100]
+_ligne_offsets = [0]
+_cum = 0
+for gap in LIGNE_GAPS:
+    _cum += gap
+    _ligne_offsets.append(_cum)
+LIGNE_OFFSETS = tuple(_ligne_offsets)
+
+
+def has_depth(dim_str: str | None) -> bool:
+    if not dim_str:
+        return False
+    return bool(re.search(r"P\.?\s*[\d,]", dim_str))
 
 
 @dataclass
@@ -13,7 +33,6 @@ class LayoutConfig:
     marge_gauche: float = 400
     marge_haut: float = 300
     marge_cadre: float = 100
-    offset_carte: float = 1700
     largeur_carte: float = 1800
     hauteur_texte_carte: float = 80
 
@@ -32,6 +51,8 @@ class PositionedWork:
     cadre_h: float
     has_dimensions: bool = True
     section_name: str = ""
+    has_depth: bool = False
+    section_y: float = 0.0
 
 
 def _compute_display_size(work: Work, col_w: float) -> tuple[float, float, float, float, bool]:
@@ -70,23 +91,30 @@ def _compute_display_size(work: Work, col_w: float) -> tuple[float, float, float
 
 
 def compute_layout(sections: list[Section], config: LayoutConfig) -> list[PositionedWork]:
+    row_height = LIGNE_OFFSETS[-1] + config.hauteur_texte_carte + 200
     start_y = 89280.0
-    row_height = config.hauteur_image + 2 * config.marge_cadre + config.hauteur_texte_carte + 1700
 
     result: list[PositionedWork] = []
     for row_idx, section in enumerate(sections):
-        y = start_y - row_idx * row_height
+        section_top = start_y - row_idx * row_height
         for col_idx, work in enumerate(section.works):
             x = config.marge_gauche + col_idx * (config.largeur_colonne + config.espace_horizontal)
             plan_w, plan_h, cadre_w, cadre_h, has_dim = _compute_display_size(work, config.largeur_colonne)
             block_name = f"ART-{work.dexid}"
+
+            # Works with depth (P) go on ligne 3 (idx 2), others on ligne 1 (idx 0)
+            dep = has_depth(work.dimensions)
+            block_y = section_top - (LIGNE_OFFSETS[2] if dep else LIGNE_OFFSETS[0])
+
             result.append(PositionedWork(
                 work=work, col=col_idx, row=row_idx,
                 block_name=block_name,
-                insert_x=x, insert_y=y,
+                insert_x=x, insert_y=block_y,
                 plan_w=plan_w, plan_h=plan_h,
                 cadre_w=cadre_w, cadre_h=cadre_h,
                 has_dimensions=has_dim,
                 section_name=section.name,
+                has_depth=dep,
+                section_y=section_top,
             ))
     return result

@@ -6,7 +6,7 @@ from pathlib import Path
 import ezdxf
 
 from blocks import create_work_block, _make_detail_text
-from layout import LayoutConfig, PositionedWork
+from layout import LIGNE_OFFSETS, LIGNE_LAYERS, LayoutConfig, PositionedWork
 from styles import LAYERS, TEXT_STYLES
 
 
@@ -160,11 +160,16 @@ def generate_dxf(works: list[PositionedWork], config: LayoutConfig, output_path:
         )
 
         cx, cy = pw.insert_x, pw.insert_y
-        msp.add_blockref(bname, insert=(cx, cy), dxfattribs={"layer": "A8-ART-works plan"})
+        msp.add_blockref(bname, insert=(cx, cy), dxfattribs={"layer": "0"})
 
         card_x = cx - pw.cadre_w / 2
-        no_y = cy - config.offset_carte
-        detail_y = no_y - 100
+        sy = pw.section_y
+        if pw.has_depth:
+            no_y = sy - LIGNE_OFFSETS[5]
+        else:
+            no_y = sy - LIGNE_OFFSETS[1]
+
+        detail_y = sy - LIGNE_OFFSETS[6]
 
         msp.add_mtext(
             pw.work.dexid,
@@ -174,7 +179,7 @@ def generate_dxf(works: list[PositionedWork], config: LayoutConfig, output_path:
                 "char_height": 90,
                 "color": 152,
                 "insert": (card_x, no_y),
-                "attachment_point": 4,
+                "attachment_point": 8,
                 "width": config.largeur_carte,
             },
         )
@@ -189,7 +194,7 @@ def generate_dxf(works: list[PositionedWork], config: LayoutConfig, output_path:
                     "char_height": config.hauteur_texte_carte,
                     "color": 230,
                     "insert": (card_x, detail_y),
-                    "attachment_point": 1,
+                    "attachment_point": 4,
                     "width": config.largeur_carte,
                 },
             )
@@ -202,15 +207,15 @@ def generate_dxf(works: list[PositionedWork], config: LayoutConfig, output_path:
 
 
 def _draw_section_lines(msp, works: list[PositionedWork]):
-    sections = {row_idx: list(g) for row_idx, g in groupby(works, key=lambda w: w.row)}
-    for row, group_list in sections.items():
-        cy = group_list[0].insert_y
+    for _row, group in groupby(works, key=lambda w: w.row):
+        group_list = list(group)
+        sy = group_list[0].section_y
         x_min = min(pw.insert_x - pw.cadre_w / 2 for pw in group_list)
         x_max = max(pw.insert_x + pw.cadre_w / 2 for pw in group_list)
         padding = 1500
         x1 = x_min - padding
         x2 = x_max + padding
 
-        msp.add_line((x1, cy), (x2, cy), dxfattribs={"layer": "A6-VU 2"})
-        msp.add_line((x1, cy - 800), (x2, cy - 800), dxfattribs={"layer": "A6-VU 2"})
-        msp.add_line((x1, cy - 1600), (x2, cy - 1600), dxfattribs={"layer": "A2-CHIMASE"})
+        for i, layer in enumerate(LIGNE_LAYERS):
+            ly = sy - LIGNE_OFFSETS[i]
+            msp.add_line((x1, ly), (x2, ly), dxfattribs={"layer": layer})
