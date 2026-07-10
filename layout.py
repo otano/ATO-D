@@ -13,7 +13,7 @@ class LayoutConfig:
     marge_gauche: float = 400
     marge_haut: float = 300
     marge_cadre: float = 100
-    offset_carte: float = 1800
+    offset_carte: float = 1700
     largeur_carte: float = 1800
     hauteur_texte_carte: float = 80
 
@@ -31,6 +31,7 @@ class PositionedWork:
     cadre_w: float
     cadre_h: float
     has_dimensions: bool = True
+    section_name: str = ""
 
 
 def _compute_display_size(work: Work, col_w: float) -> tuple[float, float, float, float, bool]:
@@ -86,5 +87,6 @@ def compute_layout(sections: list[Section], config: LayoutConfig) -> list[Positi
                 plan_w=plan_w, plan_h=plan_h,
                 cadre_w=cadre_w, cadre_h=cadre_h,
                 has_dimensions=has_dim,
+                section_name=section.name,
             ))
     return result

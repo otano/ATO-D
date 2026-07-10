@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import groupby
 from pathlib import Path
 
 import ezdxf
@@ -193,6 +194,23 @@ def generate_dxf(works: list[PositionedWork], config: LayoutConfig, output_path:
                 },
             )
 
+    _draw_section_lines(msp, works)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     doc.saveas(str(output_path))
     return output_path
+
+
+def _draw_section_lines(msp, works: list[PositionedWork]):
+    sections = {row_idx: list(g) for row_idx, g in groupby(works, key=lambda w: w.row)}
+    for row, group_list in sections.items():
+        cy = group_list[0].insert_y
+        x_min = min(pw.insert_x - pw.cadre_w / 2 for pw in group_list)
+        x_max = max(pw.insert_x + pw.cadre_w / 2 for pw in group_list)
+        padding = 1500
+        x1 = x_min - padding
+        x2 = x_max + padding
+
+        msp.add_line((x1, cy), (x2, cy), dxfattribs={"layer": "A6-VU 2"})
+        msp.add_line((x1, cy - 800), (x2, cy - 800), dxfattribs={"layer": "A6-VU 2"})
+        msp.add_line((x1, cy - 1600), (x2, cy - 1600), dxfattribs={"layer": "A2-CHIMASE"})
