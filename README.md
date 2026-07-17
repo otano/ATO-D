@@ -28,13 +28,13 @@ uv sync
 
 Cela crée l'environnement virtuel et installe les dépendances :
 
-| Paquet      | Rôle                              |
-|-------------|-----------------------------------|
-| `ezdxf`     | Génération de fichiers DXF/DWG    |
-| `openpyxl`  | Lecture Excel et extraction d'images |
-| `pandas`    | Manipulation des données Excel    |
+| Paquet      | Rôle                                     |
+|-------------|------------------------------------------|
+| `ezdxf`     | Génération de fichiers DXF/DWG           |
+| `openpyxl`  | Lecture Excel et extraction d'images     |
+| `pandas`    | Manipulation des données Excel           |
 | `pillow`    | Traitement et redimensionnement d'images |
-| `pyyaml`    | Lecture de la configuration YAML  |
+| `pyyaml`    | Lecture de la configuration YAML         |
 
 ## Utilisation
 
@@ -58,18 +58,18 @@ uv run python main.py <fichier_excel.xlsx> -c config.yaml -o resultat.dxf
 
 Toutes les valeurs sont en unités DXF (mm).
 
-| Paramètre            | Défaut | Description                                             |
-|----------------------|--------|---------------------------------------------------------|
-| `largeur_colonne`    | 1800   | Largeur de chaque colonne (emplacement d'œuvre)         |
-| `hauteur_image`      | 600    | Hauteur par défaut de l'image (pas de dimensions)       |
-| `largeur_image`      | 450    | Largeur par défaut de l'image (pas de dimensions)       |
-| `espace_horizontal`  | 250    | Espace horizontal entre les colonnes                    |
-| `espace_vertical`    | 700    | Espace vertical entre les sections                      |
-| `marge_gauche`       | 400    | Marge à gauche depuis l'origine                         |
-| `marge_haut`         | 300    | Marge en haut                                            |
-| `marge_cadre`        | 100    | Marge autour de l'œuvre quand les dimensions du cadre sont inconnues |
-| `largeur_carte`      | 1800   | Largeur de la fiche descriptive sous chaque œuvre       |
-| `hauteur_texte_carte`| 80     | Hauteur du caractère sur la fiche descriptive           |
+| Paramètre            | Défaut | Description                                                         |
+|----------------------|--------|---------------------------------------------------------------------|
+| `largeur_colonne`    | 1800   | Largeur de chaque colonne (emplacement d'œuvre)                     |
+| `hauteur_image`      | 600    | Hauteur par défaut de l'image (pas de dimensions)                   |
+| `largeur_image`      | 450    | Largeur par défaut de l'image (pas de dimensions)                   |
+| `espace_horizontal`  | 250    | Espace horizontal entre les colonnes                                |
+| `espace_vertical`    | 700    | Espace vertical entre les sections                                  |
+| `marge_gauche`       | 400    | Marge à gauche depuis l'origine                                     |
+| `marge_haut`         | 300    | Marge en haut                                                       |
+| `marge_cadre`        | 100    | Marge autour de l'œuvre quand les dimensions du cadre sont inconnues|
+| `largeur_carte`      | 1800   | Largeur de la fiche descriptive sous chaque œuvre                   |
+| `hauteur_texte_carte`| 80     | Hauteur du caractère sur la fiche descriptive                       |
 
 ## Structure du projet
 
@@ -124,8 +124,8 @@ L'application suit une architecture en 3 couches, séparant les préoccupations 
 | `excel_reader.py`   | 1      | Extraction des données Excel, parsing des dimensions (notation FR) |
 | `layout.py`         | 2      | Calcul des positions X/Y de chaque œuvre dans la grille            |
 | `dwg_generator.py`  | 3      | Création du document DXF, insertion des blocs et annotations       |
-| `blocks.py`         | 3      | Définition des blocs AutoCAD (image + cadre + fiche)              |
-| `styles.py`         | 3      | Définitions des calques (28) et styles de texte (14)              |
+| `blocks.py`         | 3      | Définition des blocs AutoCAD (image + cadre + fiche)               |
+| `styles.py`         | 3      | Définitions des calques (28) et styles de texte (14)               |
 | `image_manager.py`  | util   | Utilitaire de redimensionnement d'images (Pillow)                  |
 
 ### Format des dimensions
